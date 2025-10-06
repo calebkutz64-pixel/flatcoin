@@ -1,0 +1,6 @@
+/flatcoin.egg-info
+chain-cache.db
+wallet.json
+
+/.venv
+/.vscode
