@@ -1,0 +1,2 @@
+[console_scripts]
+flatcoin-mine = flatcoin.scripts.mine:main
