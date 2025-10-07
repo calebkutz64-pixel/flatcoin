@@ -56,3 +56,9 @@ class BlockStore:
             
         """, (hash,))
         self.connection.commit()
+        
+        
+CHAIN_DIRECTORY = "chain-state"
+
+class DefaultBlockStore:
+    instance = BlockStore(f"{CHAIN_DIRECTORY}/chain-cache.db")

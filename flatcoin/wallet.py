@@ -4,6 +4,7 @@ import ecdsa
 
 from typing import Dict, List, Set, TextIO
 
+from flatcoin.coinstate import CoinState
 from flatcoin.reading import computer, human
 from flatcoin.transaction import Input, Output, OutputReference, Transaction
 
@@ -36,8 +37,21 @@ class Wallet:
         data = json.load(f)
         
         return cls(
-            keypair={computer(k): computer(v) for (k, v) in data}
+            keypair={computer(k): computer(v) for (k, v) in data.items()}
         )
+        
+    def get_balance(self, coinstate: CoinState) -> int:
+        if not self.keypair: 
+            return 0
+        
+        total = 0
+        owned_keys = self.keypair.keys()
+        
+        for out in coinstate.unspent_transaction_outs.values():
+            if out.public_key in owned_keys:
+                total += out.value
+                
+        return total
         
         
 def save_wallet(wallet: Wallet) -> None:
@@ -88,3 +102,11 @@ def create_spend_transaction(
     transaction.cached_hash = transaction.hash()
     return transaction
     
+    
+def create_coinbase_transaction(miner_public_key: bytes, reward: int, block_height: int) -> Transaction:
+    coinbase_reference = OutputReference(b"\x00" * 32, block_height)
+    coinbase_input = Input(output_reference=coinbase_reference, signature=b"\x00" * 64)
+    coinbase_output = Output(value=reward, public_key=miner_public_key)
+    transaction = Transaction(inputs=[coinbase_input], outputs=[coinbase_output], hash=None)
+    transaction.cached_hash = transaction.hash()
+    return transaction

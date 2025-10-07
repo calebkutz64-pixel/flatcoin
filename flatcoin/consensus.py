@@ -36,16 +36,9 @@ def validate_transaction(transaction: Transaction) -> None:
     
     if len(transaction.serialize()) > MAX_BLOCK_SIZE:
         raise TransactionValidationError("transaction > MAX_BLOCK_SIZE")
-
-
-def validate_proof_of_work(hash: bytes, target: bytes) -> None:
-    if hash >= target:
-        raise ProofOfWorkValidationError("hash >= target")
     
 
 def validate_block_header(block_header: BlockHeader, current_timestamp: int) -> None:
-    validate_proof_of_work(block_header.hash(), block_header.summary.target)
-    
     if block_header.summary.timestamp > current_timestamp + MAX_FUTURE_BLOCK_TIME:
         raise BlockHeaderValidationError("Block timestamp in the future")
     

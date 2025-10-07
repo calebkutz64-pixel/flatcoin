@@ -45,7 +45,7 @@ class BlockSummary(Serializable):
         (nonce,) = struct.unpack(b">I", safe_read(f, 4))
         (target,) = struct.unpack(b">I", safe_read(f, 4))
         previous_block_hash = safe_read(f, 32)
-        return cls(timestamp, height, block_hash, nonce, previous_block_hash) 
+        return cls(timestamp, height, block_hash, nonce, target, previous_block_hash) 
     
     
 class BlockHeader(Serializable):
