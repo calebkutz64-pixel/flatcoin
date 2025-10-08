@@ -33,8 +33,8 @@ class Input(Serializable):
         
     def stream_serialize(self, f: BinaryIO) -> None:
         self.output_reference.stream_serialize(f)
-        assert self.signature
-        f.write(self.signature)
+        # assert self.signature
+        #
 
     @classmethod
     def stream_deserialize(cls, f: BinaryIO) -> "Input":

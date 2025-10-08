@@ -1,7 +1,9 @@
 import os
 import sqlite3
+from typing import Any, List
 
 from flatcoin.block import Block
+from flatcoin.utils import create_chain_directory
 
 
 class BlockStore:
@@ -57,8 +59,21 @@ class BlockStore:
         """, (hash,))
         self.connection.commit()
         
+    def items(self) -> List[Any]:
+        cursor = self.connection.execute("""
+            
+            SELECT block_bytes FROM chain
+                                             
+        """)
+        items = cursor.fetchall()
+        return items
+    
+    def item_count(self) -> int:
+        return len(self.items())
+        
         
 CHAIN_DIRECTORY = "chain-state"
 
 class DefaultBlockStore:
+    create_chain_directory()
     instance = BlockStore(f"{CHAIN_DIRECTORY}/chain-cache.db")

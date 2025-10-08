@@ -1,3 +1,4 @@
+from flatcoin.coinstate import CoinState
 from flatcoin.reading import computer
 import time
 from flatcoin.block import Block, BlockHeader, BlockSummary
@@ -54,5 +55,5 @@ def create_genesis_block(coinbase_value: int, public_key: bytes) -> Block:
     
     block_hash = sha256d(genesis_block.serialize())
     genesis_block.header.summary.block_hash = block_hash
-
+    
     return genesis_block

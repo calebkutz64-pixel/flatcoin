@@ -5,8 +5,10 @@ import ecdsa
 from typing import Dict, List, Set, TextIO
 
 from flatcoin.coinstate import CoinState
+from flatcoin.hash import sha256d
 from flatcoin.reading import computer, human
 from flatcoin.transaction import Input, Output, OutputReference, Transaction
+import ecdsa
 
 
 class Wallet:
@@ -27,6 +29,12 @@ class Wallet:
         json.dump({
            human(k): human(v) for (k, v) in self.keypair.items()
         }, f, indent=4)
+        
+    def __getitem__(self, public_key: bytes) -> bytes:
+        return self.keypair[public_key]
+    
+    def __contains__(self, public_key: bytes) -> bool:
+        return public_key in self.keypair
         
     @classmethod
     def empty(cls) -> "Wallet":
@@ -71,8 +79,7 @@ def create_spend_transaction(
     if not wallet.keypair:
         raise ValueError("Wallet has no keys")
     
-    public_key, private_key = next(iter(wallet.keypair.items()))
-    signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
+    public_key, _ = next(iter(wallet.keypair.items()))
     
     total = 0
     chosen_unspent_transaction_outs: List[tuple[OutputReference, Output]] = []
@@ -95,12 +102,10 @@ def create_spend_transaction(
     
     transaction = Transaction(inputs, outputs, None)
     transaction_hash = transaction.hash()
-    for inp in transaction.inputs:
-        signature = signing_key.sign_deterministic(transaction_hash)
-        inp.signature = signature
-        
-    transaction.cached_hash = transaction.hash()
-    return transaction
+    
+    signed_transaction = sign_transaction(wallet, unspent_transaction_outs, transaction)
+    
+    return signed_transaction
     
     
 def create_coinbase_transaction(miner_public_key: bytes, reward: int, block_height: int) -> Transaction:
@@ -110,3 +115,37 @@ def create_coinbase_transaction(miner_public_key: bytes, reward: int, block_heig
     transaction = Transaction(inputs=[coinbase_input], outputs=[coinbase_output], hash=None)
     transaction.cached_hash = transaction.hash()
     return transaction
+
+
+def sign_transaction(
+    wallet: Wallet,
+    unspent_transaction_outs: Dict[OutputReference, Output],
+    transaction: Transaction
+) -> Transaction:
+    message = transaction.serialize()
+    
+    signed_inputs = []
+    for input in transaction.inputs:
+        if input.output_reference not in unspent_transaction_outs:
+            raise Exception("Attempting to sign invalid transaction")
+        
+        output = unspent_transaction_outs[input.output_reference]
+        
+        if output.public_key not in wallet:
+            raise Exception("Wallet has no known Private Key")
+        
+        private_key = wallet[output.public_key]
+        
+        signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
+        
+        signature = signing_key.sign(message)
+        
+        signed_inputs.append(Input(
+            output_reference=input.output_reference,
+            signature=signature.hex()
+        ))
+        
+    signed_tx = Transaction(inputs=signed_inputs, outputs=transaction.outputs, hash=None)
+    signed_tx.cached_hash = signed_tx.hash()
+    return signed_tx
+        

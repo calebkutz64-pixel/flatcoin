@@ -17,9 +17,9 @@ def open_or_init_wallet() -> Wallet:
 
 
 def create_chain_directory() -> None:
-    if not os.path.isdir("chain-cache"):
-        os.mkdir("chain-cache")
-        os.mkdir("chain-cache/blocks")
+    if not os.path.isdir("chain-state"):
+        os.mkdir("chain-state")
+        os.mkdir("chain-state/blocks")
 
 
 def block_filename(block: Block) -> str:
@@ -27,5 +27,13 @@ def block_filename(block: Block) -> str:
 
 
 def save_block_to_file(chain_directory: str, block: Block) -> None:
-    with open(chain_directory+"/blocks/"+f"/{block_filename(block)}", "wb") as f:
+    with open(chain_directory+f"/{block_filename(block)}", "wb") as f:
         f.write(block.serialize())
+        
+        
+def block_file_count(chain_directory: str) -> int:
+    file_count = 0
+    for entry in os.scandir(chain_directory+"/blocks"):
+        if entry.is_file():
+            file_count += 1
+    return file_count
