@@ -15,6 +15,7 @@ flatcoin/reading.py
 flatcoin/serialization.py
 flatcoin/transaction.py
 flatcoin/utils.py
+flatcoin/vm.py
 flatcoin/wallet.py
 flatcoin.egg-info/PKG-INFO
 flatcoin.egg-info/SOURCES.txt

@@ -2,59 +2,54 @@ from flatcoin.block import Block, BlockHeader
 from flatcoin.params import MAX_BLOCK_SIZE, MAX_FUTURE_BLOCK_TIME
 from flatcoin.transaction import Transaction
 
-
-
-class ProofOfWorkValidationError(Exception):
-    pass
-
-
-
-class BlockHeaderValidationError(Exception):
-    pass
-
-
-
-class BlockValidationError(Exception):
-    pass
-
-
-class TransactionValidationError(Exception):
-    pass
-
-
-def validate_coinbase_transaction(transaction: Transaction) -> None:
+def validate_coinbase_transaction(transaction: Transaction) -> bool:
     if not len(transaction.inputs) == 1:
-        raise TransactionValidationError("Coinbase transaction should have 1 input")
+        return False
+
+    return True
     
     
-def validate_transaction(transaction: Transaction) -> None:
+def validate_transaction(transaction: Transaction) -> bool:
     if len(transaction.inputs) == 0:
-        raise TransactionValidationError("No inputs")
+        return False
 
     if len(transaction.outputs) == 0:
-        raise TransactionValidationError("No outputs")
-    
-    if len(transaction.serialize()) > MAX_BLOCK_SIZE:
-        raise TransactionValidationError("transaction > MAX_BLOCK_SIZE")
-    
+        return False
 
-def validate_block_header(block_header: BlockHeader, current_timestamp: int) -> None:
+    if len(transaction.serialize()) > MAX_BLOCK_SIZE:
+        return False
+
+    return True
+
+def validate_block_header(block_header: BlockHeader, current_timestamp: int) -> bool:
     if block_header.summary.timestamp > current_timestamp + MAX_FUTURE_BLOCK_TIME:
-        raise BlockHeaderValidationError("Block timestamp in the future")
+        return False
+
+    return True
     
-    
-def validate_block(block: Block, current_timestamp: int) -> None:
-    validate_block_header(block.header, current_timestamp)
+def validate_block(block: Block, current_timestamp: int) -> bool:
+    valid_header = validate_block_header(block.header, current_timestamp)
+
+    if not valid_header:
+        return False
     
     if len(block.transactions) == 0:
-        raise BlockValidationError("No transactions in block")
-    
+        return False
+
     if len(block.serialize()) > MAX_BLOCK_SIZE:
-        raise BlockValidationError("block > MAX_BLOCK_SIZE")
-    
+        return False
+
     coinbase_transaction = block.transactions[0]
     
-    validate_coinbase_transaction(coinbase_transaction)
-    
+    valid_coinbase_transaction = validate_coinbase_transaction(coinbase_transaction)
+
+    if not valid_coinbase_transaction:
+        return False
+
     for transaction in block.transactions[1:]:
-        validate_transaction(transaction)
+        valid_transaction = validate_transaction(transaction)
+
+        if not valid_transaction:
+            return False
+
+    return True
