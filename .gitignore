@@ -1,6 +1,6 @@
-/flatcoin.egg-info
-chain-cache.db
+./chain-state
 wallet.json
 
-/.venv
-/.vscode
+./flatcoin.egg-info
+./.venv
+./.vscode
